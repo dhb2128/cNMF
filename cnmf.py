@@ -7,6 +7,9 @@ import itertools
 import yaml
 import subprocess
 import scipy.sparse as sp
+import time
+import sys
+from pathlib import Path
 
 
 from scipy.spatial.distance import squareform
@@ -454,15 +457,24 @@ class cNMF():
         for idx in jobs_for_this_worker:
 
             p = run_params.iloc[idx, :]
+            out_fn = self.paths['iter_spectra'] % (p['n_components'], p['iter'])
+            if Path(out_fn).exists():
+                print(f"Already found output {out_fn}, skipping")
+                continue
+
             print('[Worker %d]. Starting task %d.' % (worker_i, idx))
+            sys.stdout.flush()
+            start_time = time.time()
             _nmf_kwargs['random_state'] = p['nmf_seed']
             _nmf_kwargs['n_components'] = p['n_components']
 
             (spectra, usages) = self._nmf(norm_counts.X, _nmf_kwargs)
+            elapsed = time.time() - start_time
+            print(f"Run {idx} took {elapsed:.4f} seconds")
             spectra = pd.DataFrame(spectra,
                                    index=np.arange(1, _nmf_kwargs['n_components']+1),
                                    columns=norm_counts.var.index)
-            save_df_to_npz(spectra, self.paths['iter_spectra'] % (p['n_components'], p['iter']))
+            save_df_to_npz(spectra, out_fn)
 
 
     def combine_nmf(self, k, remove_individual_iterations=False):
