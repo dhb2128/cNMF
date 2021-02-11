@@ -473,7 +473,7 @@ class cNMF():
             spectra = pd.DataFrame(spectra,
                                    index=np.arange(1, _nmf_kwargs['n_components']+1),
                                    columns=norm_counts.var.index)
-            save_df_to_npz(spectra, sout_fn)
+            save_df_to_npz(spectra, out_fn)
 
 
     def combine_nmf(self, k, remove_individual_iterations=False):
